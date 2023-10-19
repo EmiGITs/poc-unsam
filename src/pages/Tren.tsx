@@ -4,12 +4,17 @@ import ReactDOM from "react-dom";
 import { useCallback } from "react";
 import generateCredentials from "./auth.js";
 import config from "./config.js";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { Container, Card, Row, Col, Button } from "react-bootstrap";
 
 export default function Tren() {
   const [viajes, setViajes] = useState([]);
   const [estaciones, setEstaciones] = useState([]);
   const [value, setValue] = useState(271);
   const [value_hasta, setValue_hasta] = useState(318);
+  const [horario_suarez, setHorario_suarez] = useState();
+  const [horario_retiro, setHorario_retiro] = useState();
+
   const loadMore = useCallback(
     (viajes) => {
       setViajes(viajes);
@@ -82,6 +87,120 @@ export default function Tren() {
     loadMore(viajes);
   }
 
+  //Guardamos el horario a suarez desde miguelete
+
+  useEffect(() => {
+    generateToken().then((response) =>
+      fetch(config.url + "/estaciones/271/horarios?hasta=190", {
+        method: "get",
+        headers: new Headers({
+          Authorization: response,
+          "Content-Type": "application/json",
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (typeof data["results"][0].desde.llegada !== "undefined") {
+            var today = new Date();
+
+            var target_date = new Date(data["results"][0].desde.llegada);
+
+            var diferencia_fechas = target_date - today;
+            let diferencia_segundos = Math.floor(diferencia_fechas / 1000);
+
+            let diferencia_minutos = Math.floor(diferencia_segundos / 60);
+            let diferencia_horas = Math.floor(diferencia_minutos / 60);
+
+            diferencia_segundos = diferencia_segundos % 60;
+            diferencia_minutos = diferencia_minutos % 60;
+            diferencia_horas = diferencia_horas % 24;
+
+            let string_target = "";
+
+            if (diferencia_horas > 0) {
+              string_target =
+                "Llega a estación en " +
+                diferencia_horas.toString() +
+                " y " +
+                diferencia_minutos.toString() +
+                " minutos.";
+            } else {
+              if (diferencia_minutos > 0) {
+                string_target =
+                  "Llega a estación en " + diferencia_minutos + " minutos";
+              } else {
+                string_target = "Está en estación";
+              }
+            }
+
+            setHorario_suarez(string_target);
+          } else {
+            setHorario_suarez("No viene el tren :c");
+          }
+        })
+        .catch((err) => {
+          console.log(err.message);
+        })
+    );
+  }, []);
+
+  //Guardamos el horario a retiro desde miguelete
+
+  useEffect(() => {
+    generateToken().then((response) =>
+      fetch(config.url + "/estaciones/271/horarios?hasta=332", {
+        method: "get",
+        headers: new Headers({
+          Authorization: response,
+          "Content-Type": "application/json",
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (typeof data["results"][0].desde.llegada !== "undefined") {
+            var today = new Date();
+
+            var target_date = new Date(data["results"][0].desde.llegada);
+
+            var diferencia_fechas = target_date - today;
+            let diferencia_segundos = Math.floor(diferencia_fechas / 1000);
+
+            let diferencia_minutos = Math.floor(diferencia_segundos / 60);
+            let diferencia_horas = Math.floor(diferencia_minutos / 60);
+
+            diferencia_segundos = diferencia_segundos % 60;
+            diferencia_minutos = diferencia_minutos % 60;
+            diferencia_horas = diferencia_horas % 24;
+
+            let string_target = "";
+
+            if (diferencia_horas > 0) {
+              string_target =
+                "Llega a estación en " +
+                diferencia_horas.toString() +
+                " y " +
+                diferencia_minutos.toString() +
+                " minutos.";
+            } else {
+              if (diferencia_minutos > 0) {
+                string_target =
+                  "Llega a estación en " + diferencia_minutos + " minutos";
+              } else {
+                string_target = "Está en estación";
+              }
+            }
+
+            setHorario_retiro(string_target);
+          } else {
+            setHorario_retiro("No viene el tren :c");
+          }
+        })
+        .catch((err) => {
+          console.log(err.message);
+        })
+    );
+  }, []);
+
   useEffect(() => {
     generateToken().then((response) =>
       fetch(config.url + "/estaciones/332/horarios?hasta=271", {
@@ -123,6 +242,42 @@ export default function Tren() {
 
   return (
     <>
+      <Container className="p-4">
+        <Row>
+          {["Primary"].map((variant, idx) => (
+            <Card
+              bg={variant.toLowerCase()}
+              key={idx}
+              text={variant.toLowerCase() === "light" ? "dark" : "white"}
+              style={{ width: "20%" }}
+              className="m-2"
+            >
+              <Card.Header>Proximo Tren</Card.Header>
+              <Card.Body>
+                <Card.Title>Miguelete a Suarez </Card.Title>
+                <Card.Text>{horario_suarez}</Card.Text>
+              </Card.Body>
+            </Card>
+          ))}
+
+          {["Primary"].map((variant, idx) => (
+            <Card
+              bg={variant.toLowerCase()}
+              key={idx}
+              text={variant.toLowerCase() === "light" ? "dark" : "white"}
+              style={{ width: "20%" }}
+              className="m-2"
+            >
+              <Card.Header>Proximo Tren</Card.Header>
+              <Card.Body>
+                <Card.Title>Miguelete a Retiro</Card.Title>
+                <Card.Text>{horario_retiro}</Card.Text>
+              </Card.Body>
+            </Card>
+          ))}
+        </Row>
+      </Container>
+
       <h2>Estación de Salida</h2>
       <select
         name="select-salida"
